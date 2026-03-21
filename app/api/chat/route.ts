@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { getOrCreateConversation, saveMessage, loadExerciseAnswers } from "@/lib/supabase";
+import { getOrCreateConversation, saveMessage, loadExerciseAnswers, getUserId } from "@/lib/supabase";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -43,12 +43,13 @@ Handling väger tyngre än ord.`;
 
 export async function POST(request: Request) {
   try {
-    const { messages, moduleId = "1", sessionId } = await request.json();
+    const userId = await getUserId(request);
+    const { messages, moduleId = "1" } = await request.json();
 
     let exerciseContext = "";
-    if (sessionId) {
+    if (userId) {
       try {
-        const answers = await loadExerciseAnswers(sessionId, moduleId);
+        const answers = await loadExerciseAnswers(userId, moduleId);
         if (answers.length > 0) {
           exerciseContext = answers
             .map((a: { question_part: string; question_index: number; answer: string }) =>
@@ -65,9 +66,9 @@ export async function POST(request: Request) {
     const lastUserMessage = messages[messages.length - 1];
     let conversationId: string | null = null;
 
-    if (sessionId) {
+    if (userId) {
       try {
-        conversationId = await getOrCreateConversation(sessionId, moduleId);
+        conversationId = await getOrCreateConversation(userId, moduleId);
         await saveMessage(conversationId, "user", lastUserMessage.content);
       } catch (e) {
         console.error("Supabase save error:", e);

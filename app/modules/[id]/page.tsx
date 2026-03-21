@@ -4,9 +4,9 @@ import { useState, use, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { MODULES } from "@/lib/content";
 import { notFound } from "next/navigation";
+import { createClient } from "@/lib/auth";
 
 type Props = { params: Promise<{ id: string }> };
-
 type SavedAnswers = Record<string, Record<number, string>>;
 
 export default function ModulePage({ params }: Props) {
@@ -17,33 +17,33 @@ export default function ModulePage({ params }: Props) {
   const [activeTab, setActiveTab] = useState<"fordupning" | "ovningar">("fordupning");
   const [answers, setAnswers] = useState<SavedAnswers>({});
   const [saving, setSaving] = useState<string | null>(null);
-  const [sessionId] = useState(() => {
-    if (typeof window !== "undefined") {
-      const key = "ledarskapsresan_session";
-      const existing = localStorage.getItem(key);
-      if (existing) return existing;
-      const newId = crypto.randomUUID();
-      localStorage.setItem(key, newId);
-      return newId;
-    }
-    return crypto.randomUUID();
-  });
 
   const fordjupning = mod.lessons.find((l) => l.type === "fordupning");
   const ovningar = mod.lessons.find((l) => l.type === "ovningar");
 
+  async function getAuthHeaders(): Promise<HeadersInit> {
+    const supabase = createClient();
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (token) {
+      return { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
+    }
+    return { "Content-Type": "application/json" };
+  }
+
   useEffect(() => {
-    fetch(`/api/exercises?sessionId=${sessionId}&moduleId=${mod.id}`)
-      .then((r) => r.json())
-      .then((data: { question_part: string; question_index: number; answer: string }[]) => {
-        const loaded: SavedAnswers = {};
-        data.forEach(({ question_part, question_index, answer }) => {
-          if (!loaded[question_part]) loaded[question_part] = {};
-          loaded[question_part][question_index] = answer;
-        });
-        setAnswers(loaded);
+    (async () => {
+      const headers = await getAuthHeaders();
+      const res = await fetch(`/api/exercises?moduleId=${mod.id}`, { headers });
+      const data: { question_part: string; question_index: number; answer: string }[] = await res.json();
+      const loaded: SavedAnswers = {};
+      data.forEach(({ question_part, question_index, answer }) => {
+        if (!loaded[question_part]) loaded[question_part] = {};
+        loaded[question_part][question_index] = answer;
       });
-  }, [sessionId, mod.id]);
+      setAnswers(loaded);
+    })();
+  }, [mod.id]);
 
   const saveAnswer = useCallback(
     async (part: string, index: number, questionText: string, answer: string) => {
@@ -53,11 +53,11 @@ export default function ModulePage({ params }: Props) {
         ...prev,
         [part]: { ...(prev[part] ?? {}), [index]: answer },
       }));
+      const headers = await getAuthHeaders();
       await fetch("/api/exercises", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
-          sessionId,
           moduleId: mod.id,
           questionPart: part,
           questionIndex: index,
@@ -67,7 +67,7 @@ export default function ModulePage({ params }: Props) {
       });
       setSaving(null);
     },
-    [sessionId, mod.id]
+    [mod.id]
   );
 
   return (

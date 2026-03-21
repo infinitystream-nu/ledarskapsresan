@@ -1,9 +1,12 @@
-import { saveExerciseAnswer, loadExerciseAnswers } from "@/lib/supabase";
+import { saveExerciseAnswer, loadExerciseAnswers, getUserId } from "@/lib/supabase";
 
 export async function POST(request: Request) {
   try {
-    const { sessionId, moduleId, questionPart, questionIndex, questionText, answer } = await request.json();
-    await saveExerciseAnswer(sessionId, moduleId, questionPart, questionIndex, questionText, answer);
+    const userId = await getUserId(request);
+    if (!userId) return new Response(JSON.stringify({ error: "Ej inloggad" }), { status: 401 });
+
+    const { moduleId, questionPart, questionIndex, questionText, answer } = await request.json();
+    await saveExerciseAnswer(userId, moduleId, questionPart, questionIndex, questionText, answer);
     return new Response(JSON.stringify({ ok: true }), {
       headers: { "Content-Type": "application/json" },
     });
@@ -17,10 +20,12 @@ export async function POST(request: Request) {
 
 export async function GET(request: Request) {
   try {
+    const userId = await getUserId(request);
+    if (!userId) return new Response(JSON.stringify([]), { status: 200 });
+
     const { searchParams } = new URL(request.url);
-    const sessionId = searchParams.get("sessionId") ?? "";
     const moduleId = searchParams.get("moduleId") ?? "";
-    const answers = await loadExerciseAnswers(sessionId, moduleId);
+    const answers = await loadExerciseAnswers(userId, moduleId);
     return new Response(JSON.stringify(answers), {
       headers: { "Content-Type": "application/json" },
     });
