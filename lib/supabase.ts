@@ -60,3 +60,41 @@ export async function loadHistory(sessionId: string, moduleId: string) {
 
   return msgs ?? [];
 }
+
+export async function saveExerciseAnswer(
+  sessionId: string,
+  moduleId: string,
+  questionPart: string,
+  questionIndex: number,
+  questionText: string,
+  answer: string
+) {
+  const { data: existing } = await supabase
+    .from("exercise_answers")
+    .select("id")
+    .eq("session_id", sessionId)
+    .eq("module_id", moduleId)
+    .eq("question_part", questionPart)
+    .eq("question_index", questionIndex)
+    .single();
+
+  if (existing) {
+    await supabase
+      .from("exercise_answers")
+      .update({ answer })
+      .eq("id", existing.id);
+  } else {
+    await supabase
+      .from("exercise_answers")
+      .insert({ session_id: sessionId, module_id: moduleId, question_part: questionPart, question_index: questionIndex, question_text: questionText, answer });
+  }
+}
+
+export async function loadExerciseAnswers(sessionId: string, moduleId: string) {
+  const { data } = await supabase
+    .from("exercise_answers")
+    .select("question_part, question_index, answer")
+    .eq("session_id", sessionId)
+    .eq("module_id", moduleId);
+  return data ?? [];
+}
