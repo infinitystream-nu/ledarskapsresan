@@ -14,7 +14,7 @@ export default function ModulePage({ params }: Props) {
   const mod = MODULES.find((m) => m.id === id);
   if (!mod) notFound();
 
-  const [activeTab, setActiveTab] = useState<"fordupning" | "ovningar">("fordupning");
+  const [activeTab, setActiveTab] = useState<"video" | "fordupning" | "ovningar">("video");
   const [answers, setAnswers] = useState<SavedAnswers>({});
   const [saving, setSaving] = useState<string | null>(null);
 
@@ -90,7 +90,7 @@ export default function ModulePage({ params }: Props) {
         </div>
 
         <div className="flex gap-1 mb-6 border-b border-gray-200">
-          {["fordupning", "ovningar"].map((tab) => (
+          {(mod.videoUrl ? ["video", "fordupning", "ovningar"] : ["fordupning", "ovningar"]).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab as "fordupning" | "ovningar")}
@@ -100,10 +100,28 @@ export default function ModulePage({ params }: Props) {
                   : "border-transparent text-gray-500 hover:text-gray-700"
               }`}
             >
-              {tab === "fordupning" ? "Fördjupning" : "Övningar"}
+              {tab === "video" ? "Presentation" : tab === "fordupning" ? "Fördjupning" : "Övningar"}
             </button>
           ))}
         </div>
+
+        {activeTab === "video" && mod.videoUrl && (
+          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+            <div className="aspect-video">
+              <iframe
+                src={mod.videoUrl}
+                className="w-full h-full"
+                allow="autoplay; fullscreen; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+            <div className="p-4 border-t border-gray-100">
+              <p className="text-sm text-gray-500">
+                Se presentationen och läs sedan fördjupningen innan du svarar på övningarna.
+              </p>
+            </div>
+          </div>
+        )}
 
         {activeTab === "fordupning" && fordjupning && (
           <div className="bg-white border border-gray-200 rounded-xl p-6">

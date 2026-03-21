@@ -18,6 +18,7 @@ export type Module = {
   title: string
   theme: string
   description: string
+  videoUrl?: string
   lessons: Lesson[]
 }
 
@@ -28,6 +29,7 @@ export const MODULES: Module[] = [
     title: 'Från kollega till ledare',
     theme: 'Rollförändringen',
     description: 'Steget från medarbetare till ledare är en av de största förändringarna i yrkeslivet. Fokus skiftar från din prestation till teamets prestation.',
+    videoUrl: 'https://player.vimeo.com/video/1175805234',
     lessons: [
       {
         id: 'fordupning',
@@ -130,6 +132,7 @@ Verktyg i denna modul: **Starta i ny roll**, **Förväntansdialog**, **30-dagars
     title: 'Kommunikation och förtroende',
     theme: 'Coaching & feedback',
     description: 'Grunden för allt ledarskap är kommunikation. Att ställa rätt frågor, lyssna aktivt och ge feedback som leder framåt.',
+    videoUrl: 'https://player.vimeo.com/video/1175805260',
     lessons: [
       {
         id: 'fordupning',
@@ -252,6 +255,7 @@ Dina forum ska leda till att dina medarbetare systematiskt, regelbundet och frek
     title: 'Att sätta mål och följa upp',
     theme: 'Tydlighet skapar motivation',
     description: 'Tydliga mål är inte ett kontrollinstrument — de är en förutsättning för att medarbetare ska kunna lyckas.',
+    videoUrl: 'https://player.vimeo.com/video/1175805279',
     lessons: [
       {
         id: 'fordupning',
@@ -361,6 +365,7 @@ Din roll är att:
     title: 'Konflikthantering och svåra samtal',
     theme: 'Mod att ta tag i det som skaver',
     description: 'Konflikter är oundvikliga — och ofta ett tecken på engagemang. Den ledare som hanterar dem rätt bygger tillit.',
+    videoUrl: 'https://player.vimeo.com/video/1175805294',
     lessons: [
       {
         id: 'fordupning',
@@ -469,6 +474,7 @@ Där människor arbetar tillsammans uppstår skillnader – i synsätt, behov, p
     title: 'Ledarskap i vardagen',
     theme: 'Struktur som frigör',
     description: 'Det är inte de stora besluten som avgör om du är en bra ledare — det är vad du gör varje dag.',
+    videoUrl: 'https://player.vimeo.com/video/1175805312',
     lessons: [
       {
         id: 'fordupning',
@@ -568,6 +574,7 @@ En enkel vana i slutet av dagen eller veckan:
     title: 'Personlig utvecklingsplan',
     theme: 'Nästa steg som ledare',
     description: 'Sista modulen knyter ihop allt — inte som ett avslut, utan som en start på nästa kapitel.',
+    videoUrl: 'https://player.vimeo.com/video/1175805323',
     lessons: [
       {
         id: 'fordupning',
