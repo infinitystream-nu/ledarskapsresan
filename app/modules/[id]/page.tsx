@@ -1,5 +1,6 @@
 "use client";
 
+import Navbar from "@/app/components/Navbar";
 import { useState, use, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { MODULES } from "@/lib/content";
@@ -71,12 +72,13 @@ export default function ModulePage({ params }: Props) {
   );
 
   return (
+    <>
+      <Navbar />
     <div className="min-h-screen bg-gray-50 py-10 px-4">
       <div className="max-w-2xl mx-auto">
 
         <div className="mb-6">
           <Link href="/modules" className="text-sm text-gray-400 hover:text-gray-600">
-            ← Alla moduler
           </Link>
         </div>
 
@@ -208,5 +210,6 @@ export default function ModulePage({ params }: Props) {
 
       </div>
     </div>
+  </>
   );
 }

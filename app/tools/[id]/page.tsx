@@ -1,5 +1,6 @@
 "use client";
 
+import Navbar from "@/app/components/Navbar";
 import { use } from "react";
 import Link from "next/link";
 import { TOOLS } from "@/lib/tools";
@@ -18,11 +19,12 @@ export default function ToolPage({ params }: Props) {
   const nextTool = allModuleTools[currentIndex + 1];
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-4">
+    <>
+      <Navbar />
+      <div className="min-h-screen bg-gray-50 py-10 px-4">
       <div className="max-w-2xl mx-auto">
 
         <div className="mb-6">
-          <Link href="/tools" className="text-sm text-gray-400 hover:text-gray-600">← Verktygsbibliotek</Link>
         </div>
 
         <div className="mb-6">
@@ -67,5 +69,6 @@ export default function ToolPage({ params }: Props) {
 
       </div>
     </div>
+  </>
   );
 }

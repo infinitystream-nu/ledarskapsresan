@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect, Suspense } from "react";
+import Navbar from "@/app/components/Navbar";
+import { useState, useRef, useEffect, useLayoutEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
@@ -46,8 +47,20 @@ function CoachContent() {
     return crypto.randomUUID();
   });
   const bottomRef = useRef<HTMLDivElement>(null);
+  const topRef = useRef<HTMLDivElement>(null);
+
+  const isFirstRender = useRef(true);
+
+  useLayoutEffect(() => {
+    window.history.scrollRestoration = "manual";
+    window.scrollTo(0, 0);
+  }, []);
 
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
@@ -118,15 +131,16 @@ function CoachContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center py-10 px-4">
-      <div className="w-full max-w-2xl flex flex-col gap-4">
+    <>
+      <Navbar />
+      <div ref={topRef} className="min-h-screen bg-gray-50 py-10 px-4">
+      <div className="max-w-2xl mx-auto flex flex-col gap-4">
 
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-medium text-gray-900">Din ledarskapscoach</h1>
             <p className="text-sm text-gray-500 mt-1">Välj modul och ställ din fråga</p>
           </div>
-          <Link href="/modules" className="text-sm text-gray-400 hover:text-gray-600">← Moduler</Link>
         </div>
 
         <div className="flex flex-wrap gap-2">
@@ -183,6 +197,7 @@ function CoachContent() {
 
       </div>
     </div>
+  </>
   );
 }
 

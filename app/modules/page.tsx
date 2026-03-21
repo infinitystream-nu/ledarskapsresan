@@ -1,8 +1,11 @@
+import Navbar from "@/app/components/Navbar";
 import Link from "next/link";
 import { MODULES } from "@/lib/content";
 
 export default function ModulesPage() {
   return (
+    <>
+      <Navbar />
     <div className="min-h-screen bg-gray-50 py-10 px-4">
       <div className="max-w-2xl mx-auto">
 
@@ -46,6 +49,7 @@ export default function ModulesPage() {
         </div>
 
       </div>
-    </div>
+     </div>
+  </>
   );
 }
