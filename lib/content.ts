@@ -1,8 +1,15 @@
+export type QuestionPart = {
+  part: string
+  questions: string[]
+  reflection: string
+}
+
 export type Lesson = {
   id: string
   type: 'fordupning' | 'ovningar'
   title: string
   content: string
+  questions?: QuestionPart[]
 }
 
 export type Module = {
