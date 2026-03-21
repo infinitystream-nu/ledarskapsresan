@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
@@ -24,7 +24,7 @@ const WELCOME: Record<string, string> = {
 
 type Message = { role: "user" | "assistant"; content: string };
 
-export default function CoachPage() {
+function CoachContent() {
   const searchParams = useSearchParams();
   const initialModuleId = searchParams.get("moduleId") ?? "1";
 
@@ -183,5 +183,17 @@ export default function CoachPage() {
 
       </div>
     </div>
+  );
+}
+
+export default function CoachPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-sm text-gray-400">Laddar...</p>
+      </div>
+    }>
+      <CoachContent />
+    </Suspense>
   );
 }
