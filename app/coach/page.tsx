@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 
 const MODULES = [
   { id: "1", label: "M1 — Ny roll" },
@@ -12,7 +14,7 @@ const MODULES = [
 ];
 
 const WELCOME: Record<string, string> = {
-  "1": "Hej! Jag är din coach för modulen om att starta i ny roll. Vad funderar du på?",
+  "1": "Hej! Jag är din coach för modulen om att starta i ny roll. Har du svarat på övningarna? Berätta vad du funderar på.",
   "2": "Hej! Vi jobbar med kommunikation och förtroende. Vad vill du utforska?",
   "3": "Hej! Modulen om mål och uppföljning. Vad är din utmaning just nu?",
   "4": "Hej! Vi jobbar med konflikthantering. Vad skaver i ditt team?",
@@ -23,13 +25,26 @@ const WELCOME: Record<string, string> = {
 type Message = { role: "user" | "assistant"; content: string };
 
 export default function CoachPage() {
-  const [moduleId, setModuleId] = useState("1");
+  const searchParams = useSearchParams();
+  const initialModuleId = searchParams.get("moduleId") ?? "1";
+
+  const [moduleId, setModuleId] = useState(initialModuleId);
   const [messages, setMessages] = useState<Message[]>([
-    { role: "assistant", content: WELCOME["1"] },
+    { role: "assistant", content: WELCOME[initialModuleId] },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [sessionId] = useState(() => crypto.randomUUID());
+  const [sessionId] = useState(() => {
+    if (typeof window !== "undefined") {
+      const key = "ledarskapsresan_session";
+      const existing = localStorage.getItem(key);
+      if (existing) return existing;
+      const newId = crypto.randomUUID();
+      localStorage.setItem(key, newId);
+      return newId;
+    }
+    return crypto.randomUUID();
+  });
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -70,11 +85,9 @@ export default function CoachPage() {
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split("\n");
         buffer = lines.pop() ?? "";
-
         for (const line of lines) {
           if (!line.startsWith("data: ")) continue;
           const data = line.slice(6);
@@ -86,23 +99,17 @@ export default function CoachPage() {
               fullText += delta;
               setMessages((prev) => {
                 const updated = [...prev];
-                updated[updated.length - 1] = {
-                  role: "assistant",
-                  content: fullText,
-                };
+                updated[updated.length - 1] = { role: "assistant", content: fullText };
                 return updated;
               });
             }
           } catch {}
         }
       }
-    } catch (err) {
+    } catch {
       setMessages((prev) => {
         const updated = [...prev];
-        updated[updated.length - 1] = {
-          role: "assistant",
-          content: "Något gick fel. Försök igen.",
-        };
+        updated[updated.length - 1] = { role: "assistant", content: "Något gick fel. Försök igen." };
         return updated;
       });
     } finally {
@@ -114,9 +121,12 @@ export default function CoachPage() {
     <div className="min-h-screen bg-gray-50 flex flex-col items-center py-10 px-4">
       <div className="w-full max-w-2xl flex flex-col gap-4">
 
-        <div>
-          <h1 className="text-2xl font-medium text-gray-900">Din ledarskapscoach</h1>
-          <p className="text-sm text-gray-500 mt-1">Välj modul och ställ din fråga</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-medium text-gray-900">Din ledarskapscoach</h1>
+            <p className="text-sm text-gray-500 mt-1">Välj modul och ställ din fråga</p>
+          </div>
+          <Link href="/modules" className="text-sm text-gray-400 hover:text-gray-600">← Moduler</Link>
         </div>
 
         <div className="flex flex-wrap gap-2">
@@ -138,17 +148,10 @@ export default function CoachPage() {
         <div className="bg-white border border-gray-200 rounded-xl flex flex-col h-[500px]">
           <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
             {messages.map((msg, i) => (
-              <div
-                key={i}
-                className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-              >
-                <div
-                  className={`max-w-[80%] px-4 py-2.5 rounded-xl text-sm leading-relaxed ${
-                    msg.role === "user"
-                      ? "bg-blue-50 text-blue-900"
-                      : "bg-gray-100 text-gray-800"
-                  }`}
-                >
+              <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                <div className={`max-w-[80%] px-4 py-2.5 rounded-xl text-sm leading-relaxed ${
+                  msg.role === "user" ? "bg-blue-50 text-blue-900" : "bg-gray-100 text-gray-800"
+                }`}>
                   {msg.content}
                   {loading && i === messages.length - 1 && msg.role === "assistant" && (
                     <span className="inline-block w-1 h-4 bg-gray-400 ml-0.5 animate-pulse" />
@@ -158,7 +161,6 @@ export default function CoachPage() {
             ))}
             <div ref={bottomRef} />
           </div>
-
           <div className="border-t border-gray-100 p-3 flex gap-2">
             <input
               type="text"

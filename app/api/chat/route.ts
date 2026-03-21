@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { getOrCreateConversation, saveMessage } from "@/lib/supabase";
+import { getOrCreateConversation, saveMessage, loadExerciseAnswers } from "@/lib/supabase";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -14,8 +14,13 @@ const MODULE_CONTEXT: Record<string, { name: string; tools: string; philosophy: 
   "6": { name: "Personlig utvecklingsplan", tools: "Utvecklingsplan, Reflektionskort, 360-mini, Mentorssamtal", philosophy: "Utveckling sker inte i en rak linje. Ledarskap är att vara i ständig rörelse." },
 };
 
-function buildSystemPrompt(moduleId: string): string {
+function buildSystemPrompt(moduleId: string, exerciseContext: string): string {
   const mod = MODULE_CONTEXT[moduleId] || MODULE_CONTEXT["1"];
+
+  const answersSection = exerciseContext
+    ? `\n## Användarens övningssvar från modulen\nAnvänd dessa svar som utgångspunkt för coaching. Ställ följdfrågor på det användaren faktiskt skrivit.\n${exerciseContext}\n`
+    : "";
+
   return `Du är en personlig ledarskapscoach för nya gruppledare. Du hjälper ledare att omsätta teori till praktik.
 
 ## Din approach
@@ -24,6 +29,7 @@ function buildSystemPrompt(moduleId: string): string {
 - Koppla alltid råd till de konkreta verktygen i modulen
 - Utmana konstruktivt men var respektfull
 - Börja aldrig med "Bra fråga!" eller liknande
+- Om användaren har övningssvar — referera till dem konkret${answersSection}
 
 ## Aktiv modul: ${mod.name}
 Verktyg: ${mod.tools}
@@ -39,9 +45,26 @@ export async function POST(request: Request) {
   try {
     const { messages, moduleId = "1", sessionId } = await request.json();
 
-    const lastUserMessage = messages[messages.length - 1];
+    let exerciseContext = "";
+    if (sessionId) {
+      try {
+        const answers = await loadExerciseAnswers(sessionId, moduleId);
+        if (answers.length > 0) {
+          exerciseContext = answers
+            .map((a: { question_part: string; question_index: number; answer: string }) =>
+              `[${a.question_part}, fråga ${a.question_index + 1}]: ${a.answer}`
+            )
+            .filter((s: string) => s.split(": ")[1]?.trim())
+            .join("\n");
+        }
+      } catch (e) {
+        console.error("Exercise load error:", e);
+      }
+    }
 
+    const lastUserMessage = messages[messages.length - 1];
     let conversationId: string | null = null;
+
     if (sessionId) {
       try {
         conversationId = await getOrCreateConversation(sessionId, moduleId);
@@ -60,15 +83,12 @@ export async function POST(request: Request) {
           model: "claude-sonnet-4-20250514",
           max_tokens: 1024,
           stream: true,
-          system: buildSystemPrompt(moduleId),
+          system: buildSystemPrompt(moduleId, exerciseContext),
           messages: messages,
         });
 
         for await (const event of response) {
-          if (
-            event.type === "content_block_delta" &&
-            event.delta.type === "text_delta"
-          ) {
+          if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
             fullResponse += event.delta.text;
             const data = JSON.stringify({ text: event.delta.text });
             controller.enqueue(encoder.encode(`data: ${data}\n\n`));
@@ -89,11 +109,7 @@ export async function POST(request: Request) {
     });
 
     return new Response(stream, {
-      headers: {
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        Connection: "keep-alive",
-      },
+      headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache", Connection: "keep-alive" },
     });
   } catch (error) {
     console.error("Chat API error:", error);
