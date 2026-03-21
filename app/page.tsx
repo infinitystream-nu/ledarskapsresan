@@ -12,6 +12,14 @@ export default function Home() {
 
         <div className="grid grid-cols-1 gap-3">
           <Link
+            href="/modules"
+            className="bg-white border border-gray-200 rounded-xl p-5 text-left hover:border-blue-200 hover:bg-blue-50 transition-colors group"
+          >
+            <div className="font-medium text-gray-900 group-hover:text-blue-700">Moduler</div>
+            <div className="text-sm text-gray-500 mt-1">6 moduler — från kollega till ledare</div>
+          </Link>
+
+          <Link
             href="/coach"
             className="bg-white border border-gray-200 rounded-xl p-5 text-left hover:border-blue-200 hover:bg-blue-50 transition-colors group"
           >
