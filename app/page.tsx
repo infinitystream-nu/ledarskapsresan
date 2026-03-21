@@ -1,13 +1,45 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/auth";
 
 export default function Home() {
+  const [email, setEmail] = useState<string | null>(null);
+  const router = useRouter();
+  const supabase = createClient();
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (!data.user) {
+        router.push("/login");
+      } else {
+        setEmail(data.user.email ?? null);
+      }
+    });
+  }, []);
+
+  async function signOut() {
+    await supabase.auth.signOut();
+    router.push("/login");
+  }
+
+  if (!email) return null;
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4">
-      <div className="max-w-lg w-full text-center flex flex-col gap-6">
+      <div className="max-w-lg w-full flex flex-col gap-6">
 
-        <div>
-          <h1 className="text-3xl font-medium text-gray-900">Ledarskapsresan</h1>
-          <p className="text-gray-500 mt-2">Från kollega till ledare — övningar, kunskap och ditt stöd i vardagen</p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-medium text-gray-900">Ledarskapsresan</h1>
+            <p className="text-gray-500 mt-1">Från kollega till ledare — nivå 1</p>
+          </div>
+          <div className="text-right">
+            <p className="text-xs text-gray-400">{email}</p>
+            <button onClick={signOut} className="text-xs text-blue-600 hover:underline mt-0.5">Logga ut</button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-3">
@@ -28,7 +60,7 @@ export default function Home() {
           </Link>
         </div>
 
-        <p className="text-xs text-gray-400">Nivå 1 — Gruppledare</p>
+        <p className="text-xs text-gray-400 text-center">Nivå 1 — Gruppledare</p>
       </div>
     </div>
   );
