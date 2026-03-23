@@ -41,6 +41,7 @@ export default function Navbar() {
           <a href="/coach" onClick={handleCoachClick} className={navClass("/coach")}>
             Coach
           </a>
+          <Link href="/facilitator" className={navClass("/facilitator")}>Handledarstöd</Link>
         </div>
         <button onClick={handleSignOut} className="text-xs text-gray-400 hover:text-gray-600">
           Logga ut
