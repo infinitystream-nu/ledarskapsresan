@@ -18,12 +18,19 @@ export default function IntroPage() {
           {/* Video */}
           <div className="bg-white border border-gray-200 rounded-xl overflow-hidden mb-6">
             <div className="aspect-video">
-              <iframe
-                src="https://player.vimeo.com/video/1175805219"
-                className="w-full h-full"
-                allow="autoplay; fullscreen; picture-in-picture"
-                allowFullScreen
-              />
+              {process.env.NODE_ENV === "production" ? (
+                <iframe
+                  src="https://player.vimeo.com/video/1175805219"
+                  className="w-full h-full"
+                  allow="autoplay; fullscreen; picture-in-picture"
+                  allowFullScreen
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-900 flex flex-col items-center justify-center gap-2">
+                  <p className="text-white text-sm font-medium">Video tillgänglig på riktio.com</p>
+                  <p className="text-gray-400 text-xs">Vimeo blockerar localhost av säkerhetsskäl</p>
+                </div>
+              )}
             </div>
           </div>
 
