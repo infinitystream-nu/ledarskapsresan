@@ -19,19 +19,27 @@ export default function LoginPage() {
       if (mode === "signup") {
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
-        // Logga ut direkt så session inte triggar dashboard-redirect
         await supabase.auth.signOut();
-        // Skicka till Stripe
+  
         const res = await fetch("/api/stripe/checkout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email }),
         });
-        const data = await res.json();
+  
+        const text = await res.text();
+        console.log("Stripe response:", text);
+  
+        if (!text) {
+          setError("Tomt svar från betalningsserver");
+          return;
+        }
+  
+        const data = JSON.parse(text);
         if (data.url) {
           window.location.href = data.url;
         } else {
-          router.push("/login");
+          setError("Stripe fel: " + JSON.stringify(data));
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
