@@ -1,30 +1,14 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, NextRequest } from 'next/server'
 import Stripe from 'stripe'
-import { createClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
-import { createServerClient } from '@supabase/ssr'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
-export async function POST() {
-  const cookieStore = await cookies()
+export async function POST(req: NextRequest) {
+  const body = await req.json().catch(() => ({}))
+  const email = body.email
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-      },
-    }
-  )
-
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!email) {
+    return NextResponse.json({ error: 'Email required' }, { status: 400 })
   }
 
   const session = await stripe.checkout.sessions.create({
@@ -39,9 +23,9 @@ export async function POST() {
     subscription_data: {
       trial_period_days: 7,
     },
-    customer_email: user.email,
+    customer_email: email,
     metadata: {
-      user_id: user.id,
+      email: email,
     },
     success_url: `${process.env.NEXT_PUBLIC_APP_URL}/?payment=success`,
     cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing?payment=cancelled`,
