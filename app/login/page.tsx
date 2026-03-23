@@ -19,7 +19,9 @@ export default function LoginPage() {
       if (mode === "signup") {
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
-        // Efter signup — starta Stripe Checkout
+        // Logga ut direkt så session inte triggar dashboard-redirect
+        await supabase.auth.signOut();
+        // Skicka till Stripe
         const res = await fetch("/api/stripe/checkout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -29,7 +31,7 @@ export default function LoginPage() {
         if (data.url) {
           window.location.href = data.url;
         } else {
-          router.push("/");
+          router.push("/login");
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
